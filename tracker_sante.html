@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mon Suivi Santé</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3248;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --green: #43e97b;
+    --orange: #fa8231;
+    --text: #f0f0f8;
+    --muted: #7b7f9e;
+    --card-r: 18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 90px;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%);
+    padding: 20px 20px 0;
+    position: sticky; top: 0; z-index: 100;
+    border-bottom: 1px solid var(--border);
+  }
+  .app-header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 800;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+  }
+  .tabs {
+    display: flex; gap: 4px;
+  }
+  .tab {
+    flex: 1; padding: 10px 4px;
+    background: none; border: none;
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all .2s; text-align: center;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+
+  /* ── PAGES ── */
+  .page { display: none; padding: 16px; animation: fadeIn .25s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-r);
+    padding: 18px; margin-bottom: 14px;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 700;
+    color: var(--muted); text-transform: uppercase;
+    letter-spacing: .08em; margin-bottom: 14px;
+  }
+
+  /* ── KPI GRID ── */
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-r);
+    padding: 14px; text-align: center;
+  }
+  .kpi-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px; font-weight: 800;
+    line-height: 1;
+  }
+  .kpi-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 500; }
+  .kpi-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* Progress bar */
+  .prog-wrap { margin: 4px 0 2px; }
+  .prog-track {
+    background: var(--border);
+    border-radius: 99px; height: 8px; overflow: hidden;
+  }
+  .prog-bar {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    transition: width .5s ease;
+  }
+  .prog-bar.over { background: linear-gradient(90deg, var(--orange), var(--accent2)); }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 14px; }
+  label { font-size: 12px; color: var(--muted); font-weight: 500; display: block; margin-bottom: 6px; }
+  input, select, textarea {
+    width: 100%; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 12px;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 16px; padding: 12px 14px; outline: none;
+    transition: border-color .2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  select option { background: var(--surface2); }
+  textarea { resize: none; height: 72px; font-size: 14px; }
+
+  .meal-type-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+  .meal-btn {
+    background: var(--surface2); border: 2px solid var(--border);
+    border-radius: 12px; padding: 10px 4px;
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: 11px; font-weight: 500; cursor: pointer;
+    text-align: center; transition: all .15s;
+  }
+  .meal-btn .ico { font-size: 20px; display: block; margin-bottom: 3px; }
+  .meal-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(108,99,255,.12); }
+
+  .btn-primary {
+    width: 100%; padding: 15px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border: none; border-radius: 14px;
+    color: #fff; font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    letter-spacing: .03em; transition: opacity .2s, transform .1s;
+  }
+  .btn-primary:active { opacity: .85; transform: scale(.98); }
+  .btn-primary.orange { background: linear-gradient(135deg, var(--orange), var(--accent2)); }
+  .btn-primary.green { background: linear-gradient(135deg, var(--green), #00b09b); color: #0f1117; }
+
+  /* ── TODAY SUMMARY ── */
+  .today-meals { display: flex; flex-direction: column; gap: 8px; }
+  .meal-entry {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface2); border-radius: 12px; padding: 10px 12px;
+  }
+  .meal-entry-ico { font-size: 20px; flex-shrink: 0; }
+  .meal-entry-info { flex: 1; min-width: 0; }
+  .meal-entry-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meal-entry-sub { font-size: 11px; color: var(--muted); }
+  .meal-entry-kcal {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700; flex-shrink: 0;
+  }
+  .del-btn {
+    background: none; border: none; color: var(--muted);
+    font-size: 16px; cursor: pointer; padding: 4px; flex-shrink: 0;
+  }
+
+  /* ── CHART ── */
+  canvas { width: 100% !important; }
+
+  /* ── HISTORY TABLE ── */
+  .hist-list { display: flex; flex-direction: column; gap: 8px; }
+  .hist-item {
+    background: var(--surface2); border-radius: 12px;
+    padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .hist-date { font-size: 12px; color: var(--muted); }
+  .hist-val { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+  .hist-badge {
+    font-size: 10px; padding: 3px 8px; border-radius: 99px; font-weight: 600;
+  }
+  .badge-ok { background: rgba(67,233,123,.15); color: var(--green); }
+  .badge-over { background: rgba(255,101,132,.15); color: var(--accent2); }
+
+  /* ── WEIGHT ENTRY ── */
+  .weight-big input {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px; font-weight: 800; text-align: center;
+    color: var(--green); border-color: rgba(67,233,123,.3);
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--surface2); border: 1px solid var(--accent);
+    border-radius: 12px; padding: 12px 20px;
+    font-size: 13px; font-weight: 500; color: var(--text);
+    opacity: 0; transition: all .3s; pointer-events: none; z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── NAV ── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface); border-top: 1px solid var(--border);
+    display: flex; padding: 8px 0 20px; z-index: 100;
+  }
+  .nav-btn {
+    flex: 1; background: none; border: none;
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: 10px; cursor: pointer; padding: 4px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    transition: color .2s;
+  }
+  .nav-btn .ico { font-size: 22px; }
+  .nav-btn.active { color: var(--accent); }
+
+  .empty-state { text-align: center; color: var(--muted); padding: 30px 0; font-size: 14px; }
+  .empty-state .big { font-size: 40px; margin-bottom: 8px; }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  .imc-scale {
+    display: flex; gap: 4px; margin-top: 8px;
+  }
+  .imc-seg {
+    flex: 1; height: 6px; border-radius: 99px;
+  }
+  .imc-marker-wrap { position: relative; height: 16px; margin-top: 4px; }
+  .imc-marker { 
+    position: absolute; top: 0;
+    width: 2px; height: 10px;
+    background: white; border-radius: 1px;
+    transform: translateX(-50%);
+    transition: left .5s ease;
+  }
+  .imc-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted); }
+
+  .section-sep {
+    display: flex; align-items: center; gap: 10px; margin: 18px 0 14px;
+  }
+  .section-sep span { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; text-transform: uppercase; letter-spacing: .06em; }
+  .section-sep::before, .section-sep::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>🏃 Mon Suivi Santé</h1>
+  <div class="tabs">
+    <button class="tab active" onclick="showPage('dashboard')"><span class="tab-icon">📊</span>Bord</button>
+    <button class="tab" onclick="showPage('repas')"><span class="tab-icon">🍽️</span>Repas</button>
+    <button class="tab" onclick="showPage('poids')"><span class="tab-icon">⚖️</span>Poids</button>
+    <button class="tab" onclick="showPage('historique')"><span class="tab-icon">📋</span>Histo.</button>
+  </div>
+</div>
+
+<!-- ══ PAGE DASHBOARD ══════════════════════════════════════════════════ -->
+<div id="page-dashboard" class="page active">
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-val" id="kpi-kcal-today" style="color:var(--accent)">0</div>
+      <div class="kpi-lbl">kcal aujourd'hui</div>
+      <div class="kpi-sub" id="kpi-obj-today">/ 2000 kcal</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val" id="kpi-poids" style="color:var(--green)">—</div>
+      <div class="kpi-lbl">kg dernière pesée</div>
+      <div class="kpi-sub">objectif : 75 kg</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val" id="kpi-imc" style="color:var(--orange)">—</div>
+      <div class="kpi-lbl">IMC actuel</div>
+      <div class="kpi-sub" id="kpi-imc-cat">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val" id="kpi-aperdre" style="color:var(--accent2)">—</div>
+      <div class="kpi-lbl">kg à perdre</div>
+      <div class="kpi-sub">objectif 75 kg</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Calories aujourd'hui</div>
+    <div class="prog-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+        <span id="dash-kcal-label">0 kcal</span>
+        <span id="dash-obj-label">objectif 2000</span>
+      </div>
+      <div class="prog-track"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+    </div>
+    <div id="dash-today-meals" class="today-meals" style="margin-top:12px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">IMC — Indice de Masse Corporelle</div>
+    <div class="imc-scale">
+      <div class="imc-seg" style="background:#6c63ff;flex:2"></div>
+      <div class="imc-seg" style="background:#43e97b;flex:6.5"></div>
+      <div class="imc-seg" style="background:#fa8231;flex:5"></div>
+      <div class="imc-seg" style="background:#ff6584;flex:6.5"></div>
+    </div>
+    <div class="imc-marker-wrap"><div class="imc-marker" id="imc-marker" style="left:0%"></div></div>
+    <div class="imc-labels"><span>16</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:var(--muted);">
+      <span>Maigreur</span><span>Normal</span><span>Surpoids</span><span>Obésité</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Courbe du poids (30 derniers jours)</div>
+    <canvas id="chart-poids-dash" height="160"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Calories cette semaine</div>
+    <canvas id="chart-kcal-week" height="140"></canvas>
+  </div>
+</div>
+
+<!-- ══ PAGE REPAS ══════════════════════════════════════════════════════ -->
+<div id="page-repas" class="page">
+
+  <div class="card">
+    <div class="card-title">Ajouter un repas</div>
+
+    <div class="form-group">
+      <label>📅 Date</label>
+      <input type="date" id="repas-date">
+    </div>
+
+    <div class="form-group">
+      <label>🍴 Type de repas</label>
+      <div class="meal-type-grid">
+        <button class="meal-btn selected" onclick="selectMeal(this,'Petit-déjeuner')"><span class="ico">☀️</span>Petit-déj</button>
+        <button class="meal-btn" onclick="selectMeal(this,'Déjeuner')"><span class="ico">🌤️</span>Déjeuner</button>
+        <button class="meal-btn" onclick="selectMeal(this,'Dîner')"><span class="ico">🌙</span>Dîner</button>
+        <button class="meal-btn" onclick="selectMeal(this,'Collation')"><span class="ico">🍎</span>Collation</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>🔥 Calories (kcal)</label>
+      <input type="number" id="repas-kcal" placeholder="ex: 610" inputmode="numeric">
+    </div>
+
+    <div class="form-group">
+      <label>📝 Description (optionnel)</label>
+      <textarea id="repas-desc" placeholder="ex: pavé bœuf + pâtes + légumes + salade"></textarea>
+    </div>
+
+    <button class="btn-primary" onclick="saveRepas()">✅ Enregistrer le repas</button>
+  </div>
+
+  <div class="section-sep"><span>Repas du jour</span></div>
+
+  <div id="today-repas-list"></div>
+</div>
+
+<!-- ══ PAGE POIDS ══════════════════════════════════════════════════════ -->
+<div id="page-poids" class="page">
+
+  <div class="card">
+    <div class="card-title">Enregistrer une pesée</div>
+
+    <div class="form-group">
+      <label>📅 Date</label>
+      <input type="date" id="poids-date">
+    </div>
+
+    <div class="form-group weight-big">
+      <label>⚖️ Mon poids (kg)</label>
+      <input type="number" id="poids-val" placeholder="112.0" step="0.1" inputmode="decimal">
+    </div>
+
+    <div class="form-group">
+      <label>📝 Note (optionnel)</label>
+      <input type="text" id="poids-note" placeholder="ex: le matin à jeun, après sport...">
+    </div>
+
+    <button class="btn-primary orange" onclick="savePoids()">⚖️ Enregistrer le poids</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Courbe du poids</div>
+    <canvas id="chart-poids-full" height="180"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Mes pesées</div>
+    <div id="poids-list" class="hist-list"></div>
+  </div>
+</div>
+
+<!-- ══ PAGE HISTORIQUE ════════════════════════════════════════════════ -->
+<div id="page-historique" class="page">
+
+  <div class="card">
+    <div class="card-title">Bilan par jour</div>
+    <div id="bilan-list" class="hist-list"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Tous les repas</div>
+    <div id="all-repas-list" class="hist-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+const CFG = {
+  taille: 1.75,
+  poidsObj: 75,
+  kcalSem: 2000,
+  kcalWE: 2300,
+};
+
+// ── STORAGE ─────────────────────────────────────────────────────────────────
+function load(key, def) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; }
+  catch { return def; }
+}
+function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+
+let repas = load('repas', []);
+let poids = load('poids', []);
+let selMeal = 'Petit-déjeuner';
+
+// ── HELPERS ─────────────────────────────────────────────────────────────────
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+function fmtDate(d) {
+  const dt = new Date(d + 'T12:00:00');
+  return dt.toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+}
+function fmtDateLong(d) {
+  const dt = new Date(d + 'T12:00:00');
+  return dt.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+}
+function isWeekend(d) { const day = new Date(d + 'T12:00:00').getDay(); return day === 0 || day === 6; }
+function getObj(d) { return isWeekend(d) ? CFG.kcalWE : CFG.kcalSem; }
+function mealIco(type) {
+  return { 'Petit-déjeuner':'☀️', 'Déjeuner':'🌤️', 'Dîner':'🌙', 'Collation':'🍎' }[type] || '🍴';
+}
+function imc(poids) { return Math.round(poids / (CFG.taille * CFG.taille) * 10) / 10; }
+function imcCat(v) {
+  if (v < 18.5) return 'Insuffisance pondérale';
+  if (v < 25)   return 'Poids normal ✓';
+  if (v < 30)   return 'Surpoids';
+  if (v < 35)   return 'Obésité modérée';
+  return 'Obésité sévère';
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const tabs = ['dashboard','repas','poids','historique'];
+  document.querySelectorAll('.tab')[tabs.indexOf(id)].classList.add('active');
+  render();
+}
+
+// ── MEAL TYPE SELECT ─────────────────────────────────────────────────────────
+function selectMeal(btn, type) {
+  document.querySelectorAll('.meal-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selMeal = type;
+}
+
+// ── SAVE REPAS ───────────────────────────────────────────────────────────────
+function saveRepas() {
+  const date = document.getElementById('repas-date').value;
+  const kcal = parseInt(document.getElementById('repas-kcal').value);
+  const desc = document.getElementById('repas-desc').value.trim();
+
+  if (!date) return toast('⚠️ Sélectionne une date');
+  if (!kcal || kcal <= 0) return toast('⚠️ Saisis les calories');
+
+  repas.push({ id: Date.now(), date, type: selMeal, kcal, desc });
+  save('repas', repas);
+
+  document.getElementById('repas-kcal').value = '';
+  document.getElementById('repas-desc').value = '';
+  toast(`✅ ${selMeal} — ${kcal} kcal enregistré`);
+  render();
+}
+
+// ── SAVE POIDS ───────────────────────────────────────────────────────────────
+function savePoids() {
+  const date = document.getElementById('poids-date').value;
+  const val  = parseFloat(document.getElementById('poids-val').value);
+  const note = document.getElementById('poids-note').value.trim();
+
+  if (!date) return toast('⚠️ Sélectionne une date');
+  if (!val || val <= 0) return toast('⚠️ Saisis ton poids');
+
+  poids.push({ id: Date.now(), date, val, note });
+  poids.sort((a,b) => a.date.localeCompare(b.date));
+  save('poids', poids);
+
+  document.getElementById('poids-val').value = '';
+  document.getElementById('poids-note').value = '';
+  toast(`⚖️ ${val} kg enregistré (IMC : ${imc(val)})`);
+  render();
+}
+
+// ── DELETE ───────────────────────────────────────────────────────────────────
+function delRepas(id) {
+  repas = repas.filter(r => r.id !== id);
+  save('repas', repas);
+  render();
+}
+function delPoids(id) {
+  poids = poids.filter(p => p.id !== id);
+  save('poids', poids);
+  render();
+}
+
+// ── CHARTS ───────────────────────────────────────────────────────────────────
+let charts = {};
+function mkChart(id, cfg) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, cfg);
+}
+
+function renderChartPoids(canvasId) {
+  const sorted = [...poids].sort((a,b) => a.date.localeCompare(b.date));
+  const last30 = sorted.slice(-30);
+  if (!last30.length) { mkChart(canvasId, { type:'line', data:{ labels:[], datasets:[] } }); return; }
+
+  mkChart(canvasId, {
+    type: 'line',
+    data: {
+      labels: last30.map(p => fmtDate(p.date)),
+      datasets: [
+        {
+          label: 'Mon poids (kg)',
+          data: last30.map(p => p.val),
+          borderColor: '#6c63ff',
+          backgroundColor: 'rgba(108,99,255,0.08)',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#6c63ff',
+          pointRadius: 4, tension: 0.35, fill: true,
+        },
+        {
+          label: 'Objectif 75 kg',
+          data: last30.map(() => CFG.poidsObj),
+          borderColor: '#43e97b',
+          borderWidth: 2, borderDash: [6,4],
+          pointRadius: 0, tension: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color:'#7b7f9e', font:{ size:11 } } } },
+      scales: {
+        x: { ticks: { color:'#7b7f9e', font:{ size:10 } }, grid: { color:'#2e3248' } },
+        y: {
+          ticks: { color:'#7b7f9e', font:{ size:10 } },
+          grid: { color:'#2e3248' },
+          min: Math.max(CFG.poidsObj - 5, Math.min(...last30.map(p=>p.val)) - 3),
+        }
+      }
+    }
+  });
+}
+
+function renderChartKcalWeek(canvasId) {
+  const days = [];
+  const labels = [];
+  const vals = [];
+  const objs = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const ds = d.toISOString().split('T')[0];
+    days.push(ds);
+    labels.push(fmtDate(ds));
+    const total = repas.filter(r => r.date === ds).reduce((s,r) => s+r.kcal, 0);
+    vals.push(total);
+    objs.push(getObj(ds));
+  }
+  mkChart(canvasId, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Calories',
+          data: vals,
+          backgroundColor: vals.map((v,i) => v > objs[i] ? 'rgba(255,101,132,0.7)' : 'rgba(108,99,255,0.7)'),
+          borderRadius: 8, borderSkipped: false,
+        },
+        {
+          label: 'Objectif',
+          data: objs,
+          type: 'line',
+          borderColor: '#43e97b',
+          borderWidth: 2, borderDash: [5,4],
+          pointRadius: 0, tension: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color:'#7b7f9e', font:{ size:11 } } } },
+      scales: {
+        x: { ticks: { color:'#7b7f9e', font:{ size:10 } }, grid: { color:'#2e3248' } },
+        y: { ticks: { color:'#7b7f9e', font:{ size:10 } }, grid: { color:'#2e3248' }, min:0 }
+      }
+    }
+  });
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render() {
+  const today = todayStr();
+  const todayRepas = repas.filter(r => r.date === today);
+  const todayKcal = todayRepas.reduce((s,r) => s+r.kcal, 0);
+  const obj = getObj(today);
+  const lastPoids = poids.length ? [...poids].sort((a,b)=>a.date.localeCompare(b.date)).slice(-1)[0] : null;
+  const imcVal = lastPoids ? imc(lastPoids.val) : null;
+
+  // KPIs
+  document.getElementById('kpi-kcal-today').textContent = todayKcal;
+  document.getElementById('kpi-obj-today').textContent = `/ ${obj} kcal`;
+  document.getElementById('kpi-poids').textContent = lastPoids ? lastPoids.val : '—';
+  document.getElementById('kpi-imc').textContent = imcVal ?? '—';
+  document.getElementById('kpi-imc-cat').textContent = imcVal ? imcCat(imcVal) : '—';
+  document.getElementById('kpi-aperdre').textContent = lastPoids ? Math.max(0, (lastPoids.val - CFG.poidsObj).toFixed(1)) : '—';
+
+  // Progress bar
+  const pct = Math.min(100, Math.round(todayKcal / obj * 100));
+  const bar = document.getElementById('prog-bar');
+  bar.style.width = pct + '%';
+  bar.className = 'prog-bar' + (todayKcal > obj ? ' over' : '');
+  document.getElementById('dash-kcal-label').textContent = todayKcal + ' kcal';
+  document.getElementById('dash-obj-label').textContent = 'objectif ' + obj;
+
+  // IMC marker (scale 16–40)
+  if (imcVal) {
+    const pctImc = Math.max(0, Math.min(100, (imcVal - 16) / (40 - 16) * 100));
+    document.getElementById('imc-marker').style.left = pctImc + '%';
+  }
+
+  // Today meals on dashboard
+  const dashMeals = document.getElementById('dash-today-meals');
+  if (!todayRepas.length) {
+    dashMeals.innerHTML = '<div class="empty-state" style="padding:10px 0"><span class="big">🍽️</span><br>Aucun repas enregistré aujourd\'hui</div>';
+  } else {
+    dashMeals.innerHTML = todayRepas.map(r => `
+      <div class="meal-entry">
+        <span class="meal-entry-ico">${mealIco(r.type)}</span>
+        <div class="meal-entry-info">
+          <div class="meal-entry-name">${r.type}${r.desc ? ' — ' + r.desc : ''}</div>
+        </div>
+        <div class="meal-entry-kcal" style="color:var(--accent)">${r.kcal}</div>
+      </div>`).join('');
+  }
+
+  // Today repas page
+  const list = document.getElementById('today-repas-list');
+  if (!todayRepas.length) {
+    list.innerHTML = '<div class="empty-state"><div class="big">🍽️</div>Aucun repas aujourd\'hui</div>';
+  } else {
+    list.innerHTML = todayRepas.map(r => `
+      <div class="meal-entry" style="margin-bottom:8px">
+        <span class="meal-entry-ico">${mealIco(r.type)}</span>
+        <div class="meal-entry-info">
+          <div class="meal-entry-name">${r.type}</div>
+          <div class="meal-entry-sub">${r.desc || '—'}</div>
+        </div>
+        <div class="meal-entry-kcal" style="color:var(--accent)">${r.kcal} kcal</div>
+        <button class="del-btn" onclick="delRepas(${r.id})">🗑️</button>
+      </div>`).join('');
+  }
+
+  // Poids list
+  const sorted_p = [...poids].sort((a,b) => b.date.localeCompare(a.date)).slice(0,15);
+  const pList = document.getElementById('poids-list');
+  if (!sorted_p.length) {
+    pList.innerHTML = '<div class="empty-state"><div class="big">⚖️</div>Aucune pesée enregistrée</div>';
+  } else {
+    pList.innerHTML = sorted_p.map(p => `
+      <div class="hist-item">
+        <div>
+          <div class="hist-date">${fmtDateLong(p.date)}</div>
+          ${p.note ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${p.note}</div>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div>
+            <div class="hist-val" style="color:var(--green)">${p.val} kg</div>
+            <div style="font-size:10px;color:var(--muted);text-align:right">IMC ${imc(p.val)}</div>
+          </div>
+          <button class="del-btn" onclick="delPoids(${p.id})">🗑️</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // Bilan par jour (historique)
+  const byDay = {};
+  repas.forEach(r => {
+    if (!byDay[r.date]) byDay[r.date] = 0;
+    byDay[r.date] += r.kcal;
+  });
+  const days_sorted = Object.keys(byDay).sort().reverse().slice(0,20);
+  const bilanList = document.getElementById('bilan-list');
+  if (!days_sorted.length) {
+    bilanList.innerHTML = '<div class="empty-state"><div class="big">📋</div>Aucun historique</div>';
+  } else {
+    bilanList.innerHTML = days_sorted.map(d => {
+      const total = byDay[d];
+      const o = getObj(d);
+      const ok = total <= o;
+      return `<div class="hist-item">
+        <div>
+          <div style="font-size:13px;font-weight:500">${fmtDateLong(d)}</div>
+          <div class="hist-date">${isWeekend(d)?'Week-end':'Semaine'} — objectif ${o} kcal</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="hist-val" style="color:${ok?'var(--green)':'var(--accent2)'}">${total}</div>
+          <span class="hist-badge ${ok?'badge-ok':'badge-over'}">${ok?'✅ OK':'⚠️'}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // All repas list
+  const allSorted = [...repas].sort((a,b) => b.date.localeCompare(a.date) || b.id-a.id).slice(0,30);
+  const allList = document.getElementById('all-repas-list');
+  if (!allSorted.length) {
+    allList.innerHTML = '<div class="empty-state"><div class="big">🍴</div>Aucun repas enregistré</div>';
+  } else {
+    allList.innerHTML = allSorted.map(r => `
+      <div class="hist-item">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:20px">${mealIco(r.type)}</span>
+          <div>
+            <div style="font-size:13px;font-weight:500">${r.type}</div>
+            <div class="hist-date">${fmtDateLong(r.date)}${r.desc ? ' · ' + r.desc : ''}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="hist-val" style="color:var(--accent)">${r.kcal}</div>
+          <button class="del-btn" onclick="delRepas(${r.id})">🗑️</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // Charts
+  renderChartPoids('chart-poids-dash');
+  renderChartPoids('chart-poids-full');
+  renderChartKcalWeek('chart-kcal-week');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById('repas-date').value = todayStr();
+document.getElementById('poids-date').value = todayStr();
+render();
+</script>
+</body>
+</html>
